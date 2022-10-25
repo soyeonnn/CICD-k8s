@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: alb-ingress
+  namespace: "rolling-alb"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/subnets: public-subnets
+    alb.ingress.kubernetes.io/security-groups: sec-grp
+    alb.ingress.kubernetes.io/conditions.rolling-front: '[{"Field":"query-string","QueryStringConfig":{"Values":[{"Key":"group","Value":"green"}]}}]'
+    alb.ingress.kubernetes.io/conditions.forward-multiple-tg: '[{"Field":"query-string","QueryStringConfig":{"Values":[{"Key":"group","Value":"blue"}]}}]'
+    alb.ingress.kubernetes.io/actions.forward-multiple-tg: '{"Type":"forward","ForwardConfig":{"TargetGroups":[{"ServiceName":"rolling-front","ServicePort":"80","Weight":100}]}}'
+
+  labels:
+    app: rolling-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: rolling-front
+            servicePort: 80
